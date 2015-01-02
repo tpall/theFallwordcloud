@@ -5,15 +5,15 @@ date: "02.01.2015"
 output: html_document
 ---
 
+## Summary wordcloud of pooled albums or singles/EP lyrics.
 
+Load libraries
 ```{r loadlibs, message=FALSE}
 library("rvest") # Simple web scraping for R
 library("magrittr") # Piping: %>% operator (Ceci n'est pas un pipe)
 library("tm") # A framework for text mining applications within R
 library("wordcloud") # Word Clouds. Pretty ...
 ```
-
-## Summary wordcloud of pooled albums or singles/EP lyrics.
 
 First, we get links to albums and singles/EP from the great The Fall online discography section. 
 
