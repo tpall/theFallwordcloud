@@ -86,11 +86,13 @@ MyWC <- function(x) wordcloud(x$word, x$freq, random.order=FALSE, colors=brewer.
 
 Plot wordcloud of all 30 'The Fall' albums.
 ```{r albumcloud, warning=FALSE}
+# png("TheFallAlbumLyricsCloud.png", width=6, height=4, units="in", res=300)
 lyrics[[1]] %>% munge %>% MyWC # Albums
 ```
 
 Plot wordcloud of all 59 'The Fall' singles/EPs (not all of them have lyrics available).
 ```{r singlecloud, warning=FALSE}
+# png("TheFallSinglesLyricsCloud.png", width=6, height=4, units="in", res=300)
 lyrics[[2]] %>% munge %>% MyWC # Singles/EP
 ```
 
@@ -147,6 +149,7 @@ MyWCTits <- function(x) {
 Plot matrix of wordcloud plots.
 
 ```{r wordclouds, warning=FALSE, message=FALSE, fig.width=8, fig.height=8, results='hide'}
+# png("Albums.png", width=8, height=8, units="in", res=300)
 par(mfrow=c(5,6))
 Albums %>% lapply(MyWCTits)
 ```
