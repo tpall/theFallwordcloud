@@ -1,0 +1,147 @@
+---
+title: "The Fall album lyrics wordcloud"
+author: "TP"
+date: "02.01.2015"
+output: html_document
+---
+
+
+```{r loadlibs, message=FALSE}
+library("rvest") # Simple web scraping for R
+library("magrittr") # Piping: %>% operator (Ceci n'est pas un pipe)
+library("tm") # A framework for text mining applications within R
+library("wordcloud") # Word Clouds. Pretty ...
+```
+
+## Summary wordcloud of pooled albums or singles/EP lyrics.
+
+First, we get links to albums and singles/EP from the great The Fall online discography section. 
+
+```{r discolinks}
+discography <- list(albums="http://thefall.org/discography/albums.html",singles="http://thefall.org/discography/singles.html")
+```
+
+Function to download lyrics and munge html source using functions from **rvest** package.
+
+```{r downloadlyrics}
+getlyrics <- . %>%
+  html %>%
+  html_nodes("a") %>% 
+  html_attr("href") %>% {
+    d <- grep("data",.)
+    .[d]
+  } %>% 
+  file.path("http://thefall.org/discography",.) %>%
+  sapply(html) %>% 
+  lapply({. %>% html_nodes("i") %>% html_text(trim = TRUE)}) 
+lyrics <- discography %>% lapply(getlyrics)
+```
+
+Function to download album names.
+
+```{r downloadtitles}
+getTitles <- . %>%
+  html %>%
+  html_nodes("b:nth-child(3)") %>% 
+  html_text(trim = TRUE)
+Titles <- discography %>% lapply(getTitles)
+```
+
+Downloaded lyrics need some cleaning: replace weird apostrophes, remove line breaks. Then documents are turned to corpus using **tm** package functions. 
+
+```{r mungelyricstext}
+replaceApost <- . %>% 
+lapply({. %>% sapply({. %>% iconv(.,"","ASCII", "byte") %>% # convert to ascii to make apostrophes accessible via regex
+                        gsub("<c3><a2><c2><80><c2><99>","'",.) %>% 
+                        gsub("<c3><a2><c2><80><c2><98>","",.)})})
+removeBreaks <- . %>% lapply(function(x) gsub("\n"," ",x)) %>% 
+  lapply({. %>% unlist %>% paste(.,collapse = " ")})
+mungeCorpus <- . %>% VectorSource %>% 
+  Corpus %>% 
+  TermDocumentMatrix(control = list(removePunctuation = TRUE, stopwords = TRUE, removeNumbers = TRUE)) %>% 
+  as.matrix
+# use these functions to clean downloaded lyrics and create text corpus
+lyrics %<>% lapply(removeBreaks) %>% 
+  lapply(replaceApost) %>% 
+  lapply(mungeCorpus)
+# add Album names
+colnames(lyrics[[1]]) <- Titles[[1]]
+colnames(lyrics[[2]]) <- Titles[[2]]
+```
+
+Function to summarise data for summary (all albums together) wordcloud.
+
+```{r sumcloud}
+munge <- . %>% rowSums %>%
+            sort(., decreasing=TRUE) %>% 
+            data.frame %>%
+{word <- rownames(.)
+ cbind(word,.)} %>%
+  set_names(c("word","freq"))
+# wordcloud plot function adapted to my dataframe
+MyWC <- function(x) wordcloud(x$word, x$freq, random.order=FALSE, colors=brewer.pal(8, "Dark2"))
+```
+
+```{r albumcloud, warning=FALSE}
+lyrics[[1]] %>% munge %>% MyWC # Albums
+```
+
+```{r singlecloud, warning=FALSE}
+lyrics[[2]] %>% munge %>% MyWC # Singles/EP
+```
+
+## Wordclouds for each album separately
+
+Munge each album.
+
+```{r albumsmunge}
+Albums <- lyrics[[1]] %>% apply(.,2,{. %>% sort(decreasing=TRUE) %>% {
+  word <- names(.)
+  data.frame(., word)} %>% 
+    set_names(c("freq","word"))})
+
+```
+
+Create short titles for album clouds. 
+
+```{r albumtitles}
+inf <- names(Albums) %>% {m <- regexpr("[0-9]{4}",.)
+                          Year <- regmatches(., m)
+                          Title <- gsub("[ ]?[[:punct:]0-9]{6}","",.)
+                          data.frame(Year,Title)}
+# function to shorten album titles
+trimTitles <- function(titles) { # function nicked from stackoverflow
+  len <- nchar(titles)
+  maxlength <- 18
+  cuts <- sapply(gregexpr(" ", titles), function(X) {
+    max(X[X<maxlength])})
+  titles[len>=maxlength] <- paste0(substr(titles[len>=maxlength], 0, cuts[len>=maxlength]), "..")
+  titles
+}
+# add short titles to dataframe
+inf$Short <- inf$Title %>% as.character %>% trimTitles
+inf$num <- seq(1:30) # necessary to keep the albums order after split
+inf <- split(inf, inf$num)
+inf %<>% lapply(droplevels) %>% lapply({. %>% .[,-4]})
+```
+
+Merge album lyrics and title metadata.
+
+```{r mergestuff}
+Albums <- mapply(c, Albums, inf, SIMPLIFY = FALSE)
+```
+
+
+Modified wordcloud plot function with short titles perk.
+
+```{r MyWCTits}
+MyWCTits <- function(x) {
+  wordcloud(x$word, x$freq, random.order=FALSE, colors=brewer.pal(8, "Dark2"))
+  text(x=0.5, y=1.05, x$Short, vfont=c("serif","bold"), cex=1)}
+```
+
+
+```{r wordclouds, warning=FALSE, message=FALSE, fig.width=8, fig.height=8, results='hide'}
+par(mfrow=c(5,6))
+Albums %>% lapply(MyWCTits)
+```
