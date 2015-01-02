@@ -5,9 +5,9 @@ date: "02.01.2015"
 output: html_document
 ---
 
-## The Fall album lyrics wordcloud
+# The Fall album lyrics wordcloud
 
-# Summary wordcloud of pooled albums or singles/EP lyrics.
+## Summary wordcloud of pooled albums or singles/EP lyrics.
 
 First we load libraries.
 ```{r loadlibs, message=FALSE}
@@ -94,7 +94,7 @@ Plot wordcloud of all 59 'The Fall' singles/EPs (not all of them have lyrics ava
 lyrics[[2]] %>% munge %>% MyWC # Singles/EP
 ```
 
-# Create wordclouds for each of 30 albums separately
+## Create wordclouds for each of 30 albums separately
 
 Munge each album.
 
