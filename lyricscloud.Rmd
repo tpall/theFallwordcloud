@@ -7,7 +7,7 @@ output: html_document
 
 ## Summary wordcloud of pooled albums or singles/EP lyrics.
 
-Load libraries
+First we load libraries.
 ```{r loadlibs, message=FALSE}
 library("rvest") # Simple web scraping for R
 library("magrittr") # Piping: %>% operator (Ceci n'est pas un pipe)
@@ -15,13 +15,13 @@ library("tm") # A framework for text mining applications within R
 library("wordcloud") # Word Clouds. Pretty ...
 ```
 
-First, we get links to albums and singles/EP from the great The Fall online discography section. 
+Then, we download links to albums and singles/EP from the great [The Fall online](http://thefall.org/discography/albums.html) discography section.
 
 ```{r discolinks}
 discography <- list(albums="http://thefall.org/discography/albums.html",singles="http://thefall.org/discography/singles.html")
 ```
 
-Function to download lyrics and munge html source using functions from **rvest** package.
+Function to download lyrics and munge html source using functions from 'rvest' package.
 
 ```{r downloadlyrics}
 getlyrics <- . %>%
@@ -37,7 +37,7 @@ getlyrics <- . %>%
 lyrics <- discography %>% lapply(getlyrics)
 ```
 
-Function to download album names.
+Function to download and munge album names.
 
 ```{r downloadtitles}
 getTitles <- . %>%
@@ -47,7 +47,7 @@ getTitles <- . %>%
 Titles <- discography %>% lapply(getTitles)
 ```
 
-Downloaded lyrics need some cleaning: replace weird apostrophes, remove line breaks. Then documents are turned to corpus using **tm** package functions. 
+Downloaded lyrics need some cleaning: replace weird apostrophes, remove line breaks. Then documents are turned to corpus using 'tm' package functions. 
 
 ```{r mungelyricstext}
 replaceApost <- . %>% 
@@ -82,15 +82,17 @@ munge <- . %>% rowSums %>%
 MyWC <- function(x) wordcloud(x$word, x$freq, random.order=FALSE, colors=brewer.pal(8, "Dark2"))
 ```
 
+Plot wordcloud of all 30 'The Fall' albums.
 ```{r albumcloud, warning=FALSE}
 lyrics[[1]] %>% munge %>% MyWC # Albums
 ```
 
+Plot wordcloud of all 59 'The Fall' singles/EPs (not all of them have lyrics available).
 ```{r singlecloud, warning=FALSE}
 lyrics[[2]] %>% munge %>% MyWC # Singles/EP
 ```
 
-## Wordclouds for each album separately
+## Create wordclouds for each album separately
 
 Munge each album.
 
@@ -140,6 +142,7 @@ MyWCTits <- function(x) {
   text(x=0.5, y=1.05, x$Short, vfont=c("serif","bold"), cex=1)}
 ```
 
+Plot matrix of wordcloud plots.
 
 ```{r wordclouds, warning=FALSE, message=FALSE, fig.width=8, fig.height=8, results='hide'}
 par(mfrow=c(5,6))
